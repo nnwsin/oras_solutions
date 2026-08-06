@@ -2,7 +2,7 @@
 using oras.Data;
 using oras.Models;
 using oras.Repositories.Interfaces;
-
+using oras.Enums;
 namespace oras.Repositories
 {
     public class TaskRepository : ITaskRepository
@@ -47,5 +47,30 @@ namespace oras.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+
+
+        public async Task<IEnumerable<AssignedTask>> GetFilteredTasksAsync(int? projectId, AssignedTaskStatus? status,int? assigneeId)
+        {
+            var query = _context.Tasks.AsQueryable();
+
+            if (projectId.HasValue)
+            {
+                query = query.Where(t => t.ProjectId == projectId.Value);
+            }
+
+            if (status.HasValue)
+            {
+                query = query.Where(t => t.Status == status.Value);
+            }
+
+            if (assigneeId.HasValue)
+            {
+                query = query.Where(t => t.AssigneeId == assigneeId.Value);
+            }
+
+            return await query.ToListAsync();
+        }
+
     }
 }

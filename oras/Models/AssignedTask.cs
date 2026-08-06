@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
+using oras.Enums;
 namespace oras.Models
 {
     public class AssignedTask
@@ -18,8 +18,7 @@ namespace oras.Models
 
 
         [Required]
-        [MaxLength(20)]
-        public string Status { get; set; } = string.Empty;
+        public AssignedTaskStatus Status {get ; set ;} = AssignedTaskStatus.Pending ;
 
 
 
@@ -29,6 +28,9 @@ namespace oras.Models
 
 
         public int AssigneeId { get; set; }
+
+        [MaxLength(500)]
+        public string? Description { get; set; }
 
         public DateTime DueDate { get; set; }
 

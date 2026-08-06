@@ -1,4 +1,5 @@
-﻿using oras.Models;
+﻿using oras.Enums;
+using oras.Models;
 
 namespace oras.Repositories.Interfaces
 {
@@ -15,5 +16,11 @@ namespace oras.Repositories.Interfaces
         Task DeleteAsync(AssignedTask task);
 
         Task SaveChangesAsync();
+
+
+        Task<IEnumerable<AssignedTask>> GetFilteredTasksAsync(
+            int? projectId,
+            AssignedTaskStatus? status,
+            int? assigneeId);
     }
 }
