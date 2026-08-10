@@ -1,4 +1,4 @@
-﻿using oras.DTOs.Project;
+using oras.DTOs.Project;
 using oras.Exceptions;
 using oras.Models;
 using oras.Repositories.Interfaces;
@@ -9,10 +9,14 @@ namespace oras.Services
     public class ProjectService : IProjectService
     {
         private readonly IProjectRepository _projectRepository;
+        private readonly IUserRepository _userRepository;
 
-        public ProjectService(IProjectRepository projectRepository)
+        public ProjectService(
+            IProjectRepository projectRepository,
+            IUserRepository userRepository)
         {
             _projectRepository = projectRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<IEnumerable<ProjectResponseDto>> GetAllProjectsAsync()
@@ -44,6 +48,11 @@ namespace oras.Services
 
         public async Task<ProjectResponseDto> CreateProjectAsync(CreateProjectDto createProjectDto)
         {
+            var owner = await _userRepository.GetByIdAsync(createProjectDto.OwnerId);
+
+            if (owner == null)
+                throw new NotFoundException("Owner not found.");
+
             var project = new Project
             {
                 ProjectName = createProjectDto.ProjectName,
@@ -90,7 +99,6 @@ namespace oras.Services
 
             project.IsDeleted = true;
 
-            await _projectRepository.DeleteAsync(project);
             await _projectRepository.SaveChangesAsync();
         }
     }

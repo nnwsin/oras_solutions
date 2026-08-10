@@ -1,4 +1,4 @@
-﻿using oras.DTOs.Tasks;
+using oras.DTOs.Tasks;
 using oras.Enums;
 using oras.Exceptions;
 using oras.Models;
@@ -145,7 +145,6 @@ namespace oras.Services
 
             task.IsDeleted = true;
 
-            await _taskRepository.DeleteAsync(task);
             await _taskRepository.SaveChangesAsync();
         }
     }

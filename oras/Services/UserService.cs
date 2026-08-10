@@ -1,4 +1,4 @@
-﻿using oras.DTOs.User;
+using oras.DTOs.User;
 using oras.Exceptions;
 using oras.Models;
 using oras.Repositories.Interfaces;
@@ -9,10 +9,14 @@ namespace oras.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IPasswordService _passwordService;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(
+            IUserRepository userRepository,
+            IPasswordService passwordService)
         {
             _userRepository = userRepository;
+            _passwordService = passwordService;
         }
 
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
@@ -53,7 +57,9 @@ namespace oras.Services
             {
                 Name = createUserDto.Name,
                 Email = createUserDto.Email,
-                Password = createUserDto.Password
+
+                // Hash the password before saving
+                Password = _passwordService.HashPassword(createUserDto.Password)
             };
 
             await _userRepository.AddAsync(user);
@@ -102,7 +108,6 @@ namespace oras.Services
 
             user.IsDeleted = true;
 
-            await _userRepository.DeleteAsync(user);
             await _userRepository.SaveChangesAsync();
         }
     }

@@ -1,5 +1,4 @@
-﻿using oras.DTOs.Comment;
-using oras.DTOs.Comments;
+using oras.DTOs.Comment;
 using oras.Exceptions;
 using oras.Models;
 using oras.Repositories.Interfaces;
@@ -119,7 +118,6 @@ namespace oras.Services
 
             comment.IsDeleted = true;
 
-            await _commentRepository.DeleteAsync(comment);
             await _commentRepository.SaveChangesAsync();
         }
     }

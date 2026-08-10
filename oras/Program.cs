@@ -1,13 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using oras.Data;
 using oras.Exceptions;
 using oras.Repositories;
 using oras.Repositories.Interfaces;
 using oras.Services;
 using oras.Services.Interfaces;
-
-
-using Microsoft.AspNetCore.Mvc;
+using oras.Auth.Interfaces;
+using oras.Auth.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +23,10 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     options.InvalidModelStateResponseFactory = context =>
     {
         var errors = context.ModelState
-            .Where(x => x.Value.Errors.Count > 0)
+            .Where(x => x.Value != null && x.Value.Errors.Count > 0)
             .ToDictionary(
                 x => x.Key,
-                x => x.Value.Errors.Select(e => e.ErrorMessage).ToArray());
+                x => x.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
 
         var response = new
         {
@@ -36,38 +39,75 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     };
 });
 
+// OpenAPI
+builder.Services.AddOpenApi();
 
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
 
-builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddAuthorization();
 
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// Repos
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
-
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
-builder.Services.AddScoped<IProjectService, ProjectService>();
-
+// Services
 builder.Services.AddScoped<IUserService, UserService>();
-
+builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
+builder.Services.AddScoped<IPasswordService, PasswordService>();
+
+// Auth
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
+app.MapOpenApi();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

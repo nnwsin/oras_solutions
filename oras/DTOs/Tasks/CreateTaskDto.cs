@@ -20,7 +20,7 @@ namespace oras.DTOs.Tasks
         public DateTime DueDate { get; set; }
 
         [Required]
-        public int ProjectId { get; set; }
+        public int ProjectId { get;set; }
 
         [Required]
         public int AssigneeId { get; set; }

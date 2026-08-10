@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Text.Json;
 
 namespace oras.Exceptions
@@ -34,6 +34,7 @@ namespace oras.Exceptions
             {
                 BadRequestException => (int)HttpStatusCode.BadRequest,
                 NotFoundException => (int)HttpStatusCode.NotFound,
+                UnauthorizedException => (int)HttpStatusCode.Unauthorized,
                 _ => (int)HttpStatusCode.InternalServerError
             };
 

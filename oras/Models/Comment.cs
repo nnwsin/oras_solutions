@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace oras.Models
 {
@@ -11,8 +11,10 @@ namespace oras.Models
         public int UserId { get; set; }
 
 
+
         [Required]
-        public string Discussion { get; set; } = string.Empty;
+        [MaxLength(500)]
+        public string Content { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -22,7 +24,7 @@ namespace oras.Models
         public bool IsDeleted { get; set; } = false;
         
         
-        // navigatiojn prop
+        // navigation
         public AssignedTask Task { get; set; } = null!;
 
         public User User { get; set; } = null!;

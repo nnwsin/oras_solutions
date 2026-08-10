@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using oras.DTOs.Tasks;
 using oras.Enums;
@@ -8,6 +9,7 @@ namespace oras.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TaskController : ControllerBase
     {
 
