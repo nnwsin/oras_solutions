@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 using oras.Data;
 using oras.Models;
@@ -19,12 +19,13 @@ namespace oras.Repositories
 
         public async Task<IEnumerable<Project>> GetAllAsync()
         {
-            return await _context.Projects.ToListAsync();
+            return await _context.Projects.Include(p => p.Owner).ToListAsync();
         }
 
         public async Task<Project?> GetByIdAsync(int id)
         {
             return await _context.Projects
+                .Include(p => p.Owner)
                 .FirstOrDefaultAsync(p => p.ProjectId == id);
         }
 
@@ -43,6 +44,11 @@ namespace oras.Repositories
         {
             _context.Projects.Update(project);
             return Task.CompletedTask;
+        }
+
+        public async Task<IEnumerable<Project>> GetByOwnerIdAsync(int ownerId)
+        {
+            return await _context.Projects.Include(p => p.Owner).Where(p => p.OwnerId == ownerId).ToListAsync();
         }
 
         public async Task SaveChangesAsync()

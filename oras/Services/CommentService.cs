@@ -22,9 +22,11 @@ namespace oras.Services
             _userRepository = userRepository;
         }
 
-        public async Task<IEnumerable<CommentResponseDto>> GetAllCommentsAsync()
+        public async Task<IEnumerable<CommentResponseDto>> GetAllCommentsAsync(int? taskId = null)
         {
-            var comments = await _commentRepository.GetAllAsync();
+            var comments = taskId.HasValue
+                ? await _commentRepository.GetByTaskIdAsync(taskId.Value)
+                : await _commentRepository.GetAllAsync();
 
             return comments.Select(c => new CommentResponseDto
             {
@@ -32,7 +34,9 @@ namespace oras.Services
                 Content = c.Content,
                 CreatedAt = c.CreatedAt,
                 TaskId = c.TaskId,
-                UserId = c.UserId
+                TaskTitle = c.Task?.Title ?? string.Empty,
+                UserId = c.UserId,
+                UserName = c.User?.Name ?? string.Empty
             });
         }
 
@@ -49,7 +53,9 @@ namespace oras.Services
                 Content = comment.Content,
                 CreatedAt = comment.CreatedAt,
                 TaskId = comment.TaskId,
-                UserId = comment.UserId
+                TaskTitle = comment.Task?.Title ?? string.Empty,
+                UserId = comment.UserId,
+                UserName = comment.User?.Name ?? string.Empty
             };
         }
 
@@ -81,7 +87,9 @@ namespace oras.Services
                 Content = comment.Content,
                 CreatedAt = comment.CreatedAt,
                 TaskId = comment.TaskId,
-                UserId = comment.UserId
+                TaskTitle = task.Title,
+                UserId = comment.UserId,
+                UserName = user.Name
             };
         }
 
@@ -105,7 +113,9 @@ namespace oras.Services
                 Content = comment.Content,
                 CreatedAt = comment.CreatedAt,
                 TaskId = comment.TaskId,
-                UserId = comment.UserId
+                TaskTitle = comment.Task?.Title ?? string.Empty,
+                UserId = comment.UserId,
+                UserName = comment.User?.Name ?? string.Empty
             };
         }
 

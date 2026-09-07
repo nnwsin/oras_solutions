@@ -33,6 +33,7 @@ namespace oras.Controllers
 
         // POST: api/User
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateUser(CreateUserDto createUserDto)
         {
             var user = await _userService.CreateUserAsync(createUserDto);
@@ -45,6 +46,7 @@ namespace oras.Controllers
 
         // PUT: api/User/1
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
         {
             return Ok(await _userService.UpdateUserAsync(id, updateUserDto));
@@ -52,6 +54,7 @@ namespace oras.Controllers
 
         // DELETE: api/User/1
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             await _userService.DeleteUserAsync(id);

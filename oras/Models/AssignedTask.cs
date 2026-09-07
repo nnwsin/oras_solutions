@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using oras.Enums;
 namespace oras.Models
 {
@@ -23,8 +23,7 @@ namespace oras.Models
 
 
         [Required]
-        [MaxLength(20)]
-        public string Priority { get; set; } = string.Empty;
+        public Priority Priority { get; set; } = Priority.Medium;
 
 
         public int AssigneeId { get; set; }

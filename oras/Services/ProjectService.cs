@@ -10,13 +10,19 @@ namespace oras.Services
     {
         private readonly IProjectRepository _projectRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ITaskRepository _taskRepository;
+        private readonly ICommentRepository _commentRepository;
 
         public ProjectService(
             IProjectRepository projectRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            ITaskRepository taskRepository,
+            ICommentRepository commentRepository)
         {
             _projectRepository = projectRepository;
             _userRepository = userRepository;
+            _taskRepository = taskRepository;
+            _commentRepository = commentRepository;
         }
 
         public async Task<IEnumerable<ProjectResponseDto>> GetAllProjectsAsync()
@@ -27,7 +33,9 @@ namespace oras.Services
             {
                 ProjectId = p.ProjectId,
                 ProjectName = p.ProjectName,
-                OwnerId = p.OwnerId
+                OwnerId = p.OwnerId,
+                OwnerName = p.Owner?.Name ?? string.Empty,
+                CreatedAt = p.CreatedAt
             });
         }
 
@@ -42,7 +50,9 @@ namespace oras.Services
             {
                 ProjectId = project.ProjectId,
                 ProjectName = project.ProjectName,
-                OwnerId = project.OwnerId
+                OwnerId = project.OwnerId,
+                OwnerName = project.Owner?.Name ?? string.Empty,
+                CreatedAt = project.CreatedAt
             };
         }
 
@@ -66,7 +76,9 @@ namespace oras.Services
             {
                 ProjectId = project.ProjectId,
                 ProjectName = project.ProjectName,
-                OwnerId = project.OwnerId
+                OwnerId = project.OwnerId,
+                OwnerName = owner.Name,
+                CreatedAt = project.CreatedAt
             };
         }
 
@@ -86,7 +98,9 @@ namespace oras.Services
             {
                 ProjectId = project.ProjectId,
                 ProjectName = project.ProjectName,
-                OwnerId = project.OwnerId
+                OwnerId = project.OwnerId,
+                OwnerName = project.Owner?.Name ?? string.Empty,
+                CreatedAt = project.CreatedAt
             };
         }
 
@@ -98,6 +112,17 @@ namespace oras.Services
                 throw new NotFoundException("Project not found.");
 
             project.IsDeleted = true;
+
+            var tasks = await _taskRepository.GetFilteredTasksAsync(id, null, null);
+            foreach (var task in tasks)
+            {
+                task.IsDeleted = true;
+                var comments = await _commentRepository.GetByTaskIdAsync(task.TaskId);
+                foreach (var comment in comments)
+                {
+                    comment.IsDeleted = true;
+                }
+            }
 
             await _projectRepository.SaveChangesAsync();
         }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using oras.Enums;
 
 namespace oras.DTOs.User
 {
@@ -12,5 +13,8 @@ namespace oras.DTOs.User
         [EmailAddress]
         [MaxLength(100)]
         public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public UserRole Role { get; set; } = UserRole.Employee;
     }
 }

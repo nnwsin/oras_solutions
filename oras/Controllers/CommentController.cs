@@ -18,10 +18,11 @@ namespace oras.Controllers
         }
 
         // GET: api/Comment
+        // GET: api/Comment?taskId=1
         [HttpGet]
-        public async Task<IActionResult> GetAllComments()
+        public async Task<IActionResult> GetAllComments([FromQuery] int? taskId)
         {
-            var comments = await _commentService.GetAllCommentsAsync();
+            var comments = await _commentService.GetAllCommentsAsync(taskId);
             return Ok(comments);
         }
 
@@ -37,6 +38,13 @@ namespace oras.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateComment(CreateCommentDto createCommentDto)
         {
+            var userIdClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+                           ?? User?.FindFirst("sub");
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int authenticatedUserId))
+            {
+                createCommentDto.UserId = authenticatedUserId;
+            }
+
             var comment = await _commentService.CreateCommentAsync(createCommentDto);
 
             return CreatedAtAction(

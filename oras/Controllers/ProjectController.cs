@@ -33,6 +33,7 @@ namespace oras.Controllers
 
         // POST: api/Project
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateProject(CreateProjectDto createProjectDto)
         {
             var project = await _projectService.CreateProjectAsync(createProjectDto);
@@ -45,6 +46,7 @@ namespace oras.Controllers
 
         // PUT: api/Project/1
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProject(int id, UpdateProjectDto updateProjectDto)
         {
             return Ok(await _projectService.UpdateProjectAsync(id, updateProjectDto));
@@ -52,6 +54,7 @@ namespace oras.Controllers
 
         // DELETE: api/Project/1
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProject(int id)
         {
             await _projectService.DeleteProjectAsync(id);

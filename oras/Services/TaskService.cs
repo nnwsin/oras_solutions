@@ -12,15 +12,18 @@ namespace oras.Services
         private readonly ITaskRepository _taskRepository;
         private readonly IProjectRepository _projectRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ICommentRepository _commentRepository;
 
         public TaskService(
             ITaskRepository taskRepository,
             IProjectRepository projectRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            ICommentRepository commentRepository)
         {
             _taskRepository = taskRepository;
             _projectRepository = projectRepository;
             _userRepository = userRepository;
+            _commentRepository = commentRepository;
         }
 
         public async Task<IEnumerable<TaskResponseDto>> GetAllTasksAsync(
@@ -42,7 +45,10 @@ namespace oras.Services
                 DueDate = t.DueDate,
                 Priority = t.Priority,
                 ProjectId = t.ProjectId,
-                AssigneeId = t.AssigneeId
+                ProjectName = t.Project?.ProjectName ?? string.Empty,
+                AssigneeId = t.AssigneeId,
+                AssigneeName = t.Assignee?.Name ?? string.Empty,
+                CreatedAt = t.CreatedAt
             });
         }
 
@@ -62,7 +68,10 @@ namespace oras.Services
                 DueDate = task.DueDate,
                 Priority = task.Priority,
                 ProjectId = task.ProjectId,
-                AssigneeId = task.AssigneeId
+                ProjectName = task.Project?.ProjectName ?? string.Empty,
+                AssigneeId = task.AssigneeId,
+                AssigneeName = task.Assignee?.Name ?? string.Empty,
+                CreatedAt = task.CreatedAt
             };
         }
 
@@ -101,7 +110,10 @@ namespace oras.Services
                 DueDate = task.DueDate,
                 Priority = task.Priority,
                 ProjectId = task.ProjectId,
-                AssigneeId = task.AssigneeId
+                ProjectName = project.ProjectName,
+                AssigneeId = task.AssigneeId,
+                AssigneeName = user.Name,
+                CreatedAt = task.CreatedAt
             };
         }
 
@@ -114,11 +126,21 @@ namespace oras.Services
             if (task == null)
                 throw new NotFoundException("Task not found.");
 
+            var project = await _projectRepository.GetByIdAsync(updateTaskDto.ProjectId);
+            if (project == null)
+                throw new NotFoundException("Project not found.");
+
+            var user = await _userRepository.GetByIdAsync(updateTaskDto.AssigneeId);
+            if (user == null)
+                throw new NotFoundException("User not found.");
+
             task.Title = updateTaskDto.Title;
             task.Description = updateTaskDto.Description;
             task.Status = updateTaskDto.Status;
             task.DueDate = updateTaskDto.DueDate;
             task.Priority = updateTaskDto.Priority;
+            task.ProjectId = updateTaskDto.ProjectId;
+            task.AssigneeId = updateTaskDto.AssigneeId;
 
             await _taskRepository.UpdateAsync(task);
             await _taskRepository.SaveChangesAsync();
@@ -132,7 +154,10 @@ namespace oras.Services
                 DueDate = task.DueDate,
                 Priority = task.Priority,
                 ProjectId = task.ProjectId,
-                AssigneeId = task.AssigneeId
+                ProjectName = project.ProjectName,
+                AssigneeId = task.AssigneeId,
+                AssigneeName = user.Name,
+                CreatedAt = task.CreatedAt
             };
         }
 
@@ -144,6 +169,12 @@ namespace oras.Services
                 throw new NotFoundException("Task not found.");
 
             task.IsDeleted = true;
+
+            var comments = await _commentRepository.GetByTaskIdAsync(id);
+            foreach (var comment in comments)
+            {
+                comment.IsDeleted = true;
+            }
 
             await _taskRepository.SaveChangesAsync();
         }

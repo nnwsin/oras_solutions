@@ -16,7 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
@@ -39,8 +43,6 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     };
 });
 
-// OpenAPI
-builder.Services.AddOpenApi();
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -69,11 +71,12 @@ builder.Services.AddAuthorization();
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
@@ -99,13 +102,13 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
-app.MapOpenApi();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("FrontendPolicy");
+
 
 app.UseAuthentication();
 app.UseAuthorization();

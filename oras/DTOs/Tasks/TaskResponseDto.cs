@@ -1,4 +1,4 @@
-﻿using oras.Enums;
+using oras.Enums;
 
 namespace oras.DTOs.Tasks
 {
@@ -15,10 +15,16 @@ namespace oras.DTOs.Tasks
 
         public DateTime DueDate { get; set; }
 
-        public string Priority { get; set; } = string.Empty;
+        public Priority Priority { get; set; } = Priority.Medium;
 
         public int ProjectId { get; set; }
 
+        public string ProjectName { get; set; } = string.Empty;
+
         public int AssigneeId { get; set; }
+
+        public string AssigneeName { get; set; } = string.Empty;
+
+        public DateTime CreatedAt { get; set; }
     }
 }

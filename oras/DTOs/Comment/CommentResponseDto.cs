@@ -1,4 +1,4 @@
-﻿namespace oras.DTOs.Comment
+namespace oras.DTOs.Comment
 {
     public class CommentResponseDto
     {
@@ -10,6 +10,10 @@
 
         public int TaskId { get; set; }
 
+        public string TaskTitle { get; set; } = string.Empty;
+
         public int UserId { get; set; }
+
+        public string UserName { get; set; } = string.Empty;
     }
 }

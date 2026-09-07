@@ -163,6 +163,9 @@ namespace oras.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
                     b.HasKey("UserId");
 
                     b.HasIndex("Email")

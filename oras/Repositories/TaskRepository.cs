@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using oras.Data;
 using oras.Models;
 using oras.Repositories.Interfaces;
@@ -17,12 +17,14 @@ namespace oras.Repositories
 
         public async Task<IEnumerable<AssignedTask>> GetAllAsync()
         {
-            return await _context.Tasks.ToListAsync();
+            return await _context.Tasks.Include(t => t.Project).Include(t => t.Assignee).ToListAsync();
         }
 
         public async Task<AssignedTask?> GetByIdAsync(int id)
         {
             return await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.Assignee)
                 .FirstOrDefaultAsync(t => t.TaskId == id);
         }
 
@@ -52,7 +54,10 @@ namespace oras.Repositories
 
         public async Task<IEnumerable<AssignedTask>> GetFilteredTasksAsync(int? projectId, AssignedTaskStatus? status,int? assigneeId)
         {
-            var query = _context.Tasks.AsQueryable();
+            var query = _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.Assignee)
+                .AsQueryable();
 
             if (projectId.HasValue)
             {

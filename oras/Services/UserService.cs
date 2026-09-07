@@ -10,13 +10,22 @@ namespace oras.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordService _passwordService;
+        private readonly IProjectRepository _projectRepository;
+        private readonly ITaskRepository _taskRepository;
+        private readonly ICommentRepository _commentRepository;
 
         public UserService(
             IUserRepository userRepository,
-            IPasswordService passwordService)
+            IPasswordService passwordService,
+            IProjectRepository projectRepository,
+            ITaskRepository taskRepository,
+            ICommentRepository commentRepository)
         {
             _userRepository = userRepository;
             _passwordService = passwordService;
+            _projectRepository = projectRepository;
+            _taskRepository = taskRepository;
+            _commentRepository = commentRepository;
         }
 
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
@@ -27,7 +36,8 @@ namespace oras.Services
             {
                 UserId = u.UserId,
                 Name = u.Name,
-                Email = u.Email
+                Email = u.Email,
+                Role = u.Role
             });
         }
 
@@ -42,7 +52,8 @@ namespace oras.Services
             {
                 UserId = user.UserId,
                 Name = user.Name,
-                Email = user.Email
+                Email = user.Email,
+                Role = user.Role
             };
         }
 
@@ -57,8 +68,7 @@ namespace oras.Services
             {
                 Name = createUserDto.Name,
                 Email = createUserDto.Email,
-
-                // Hash the password before saving
+                Role = createUserDto.Role,
                 Password = _passwordService.HashPassword(createUserDto.Password)
             };
 
@@ -69,7 +79,8 @@ namespace oras.Services
             {
                 UserId = user.UserId,
                 Name = user.Name,
-                Email = user.Email
+                Email = user.Email,
+                Role = user.Role
             };
         }
 
@@ -87,6 +98,7 @@ namespace oras.Services
 
             user.Name = updateUserDto.Name;
             user.Email = updateUserDto.Email;
+            user.Role = updateUserDto.Role;
 
             await _userRepository.UpdateAsync(user);
             await _userRepository.SaveChangesAsync();
@@ -95,7 +107,8 @@ namespace oras.Services
             {
                 UserId = user.UserId,
                 Name = user.Name,
-                Email = user.Email
+                Email = user.Email,
+                Role = user.Role
             };
         }
 
@@ -107,6 +120,33 @@ namespace oras.Services
                 throw new NotFoundException("User not found.");
 
             user.IsDeleted = true;
+
+            var projects = await _projectRepository.GetByOwnerIdAsync(id);
+            foreach (var project in projects)
+            {
+                project.IsDeleted = true;
+                var projTasks = await _taskRepository.GetFilteredTasksAsync(project.ProjectId, null, null);
+                foreach (var task in projTasks)
+                {
+                    task.IsDeleted = true;
+                    var taskComments = await _commentRepository.GetByTaskIdAsync(task.TaskId);
+                    foreach (var c in taskComments) c.IsDeleted = true;
+                }
+            }
+
+            var assignedTasks = await _taskRepository.GetFilteredTasksAsync(null, null, id);
+            foreach (var task in assignedTasks)
+            {
+                task.IsDeleted = true;
+                var taskComments = await _commentRepository.GetByTaskIdAsync(task.TaskId);
+                foreach (var c in taskComments) c.IsDeleted = true;
+            }
+
+            var comments = await _commentRepository.GetByUserIdAsync(id);
+            foreach (var comment in comments)
+            {
+                comment.IsDeleted = true;
+            }
 
             await _userRepository.SaveChangesAsync();
         }

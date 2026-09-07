@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using oras.Models;
 
 namespace oras.Data
@@ -59,6 +59,11 @@ namespace oras.Data
                 .WithMany(u => u.AssignedTasks)
                 .HasForeignKey(t => t.AssigneeId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AssignedTask>()
+                .Property(t => t.Priority)
+                .HasConversion<string>()
+                .HasMaxLength(20);
 
             // -----------------------------
             // Comment -> Task

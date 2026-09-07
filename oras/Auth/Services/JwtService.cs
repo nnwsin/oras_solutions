@@ -9,15 +9,12 @@ namespace oras.Auth.Services
 {
     public class JwtService : IJwtService
     {
-
         private readonly IConfiguration _configuration;
 
         public JwtService(IConfiguration configuration)
         {
             _configuration = configuration;
         }
-
-
 
         public string GenerateToken(User user)
         {
@@ -32,11 +29,21 @@ namespace oras.Auth.Services
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+                new Claim(
+                    JwtRegisteredClaimNames.Sub,
+                    user.UserId.ToString()),
 
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(
+                    JwtRegisteredClaimNames.Email,
+                    user.Email),
 
-                new Claim(JwtRegisteredClaimNames.Name, user.Name)
+                new Claim(
+                    JwtRegisteredClaimNames.Name,
+                    user.Name),
+
+                new Claim(
+                    ClaimTypes.Role,
+                    user.Role.ToString())
             };
 
             var token = new JwtSecurityToken(
@@ -44,7 +51,8 @@ namespace oras.Auth.Services
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(
-                    Convert.ToDouble(_configuration["Jwt:ExpiryInMinutes"])),
+                    Convert.ToDouble(
+                        _configuration["Jwt:ExpiryInMinutes"])),
                 signingCredentials: credentials
             );
 

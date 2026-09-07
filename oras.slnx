@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="oras.Tests/oras.Tests.csproj" Id="371e86f4-4a3c-4cd1-8dd8-1783da965584" />
   <Project Path="oras/oras.csproj" />
 </Solution>

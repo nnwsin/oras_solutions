@@ -1,10 +1,10 @@
-﻿using oras.DTOs.Comment;
+using oras.DTOs.Comment;
 
 namespace oras.Services.Interfaces
 {
     public interface ICommentService
     {
-        Task<IEnumerable<CommentResponseDto>> GetAllCommentsAsync();
+        Task<IEnumerable<CommentResponseDto>> GetAllCommentsAsync(int? taskId = null);
 
         Task<CommentResponseDto> GetCommentByIdAsync(int id);
 

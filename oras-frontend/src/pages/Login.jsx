@@ -1,46 +1,51 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../api/authApi";
-
-import { Link } from "react-router-dom";
-
-
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
+        setLoading(true);
 
         try {
-            const response = await loginUser({
-                email,
-                password
-            });
-
-            console.log("Login successful:", response);
-
-        } catch (error) {
-            console.error("Login failed:", error);
+            const response = await loginUser({ email, password });
+            login(response, email);
+            navigate("/dashboard");
+        } catch (err) {
+            console.error("Login failed:", err);
+            const msg = err.response?.data?.message || err.response?.data?.Message || "Login failed. Please check your credentials.";
+            setError(msg);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <div className="auth-container">
             <div className="auth-card">
+                <div className="auth-header">
+                    <h1>Welcome Back</h1>
+                    <p>Login to your ORAS account</p>
+                </div>
 
-                <h1>Welcome Back</h1>
-
-                <p>Login to your ORAS account</p>
+                {error && <div className="error-alert">{error}</div>}
 
                 <form onSubmit={handleSubmit}>
-
                     <div className="form-group">
-                        <label>Email</label>
-
+                        <label>Email Address</label>
                         <input
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder="name@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -49,7 +54,6 @@ const Login = () => {
 
                     <div className="form-group">
                         <label>Password</label>
-
                         <input
                             type="password"
                             placeholder="Enter your password"
@@ -59,17 +63,14 @@ const Login = () => {
                         />
                     </div>
 
-                    <button type="submit">
-                        Login
+                    <button type="submit" className="btn-primary" disabled={loading}>
+                        {loading ? "Logging in..." : "Login"}
                     </button>
-
                 </form>
 
                 <p className="auth-link">
-                    Don't have an account?{" "}
-                    <Link to="/register">Register</Link>
+                    Don't have an account? <Link to="/register">Register here</Link>
                 </p>
-
             </div>
         </div>
     );

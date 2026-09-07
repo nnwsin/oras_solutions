@@ -32,10 +32,22 @@ namespace oras.Controllers
             [FromQuery] AssignedTaskStatus? status,
             [FromQuery] int? assigneeId)
         {
+            var roleClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            var userIdClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+                           ?? User?.FindFirst("sub");
+
+            int? effectiveAssigneeId = assigneeId;
+
+            // Manager and Employee must only see tasks assigned to them
+            if ((roleClaim == "Manager" || roleClaim == "Employee") && userIdClaim != null && int.TryParse(userIdClaim.Value, out int currentUserId))
+            {
+                effectiveAssigneeId = currentUserId;
+            }
+
             var tasks = await _taskService.GetAllTasksAsync(
                 projectId,
                 status,
-                assigneeId);
+                effectiveAssigneeId);
 
             return Ok(tasks);
         }
@@ -49,6 +61,7 @@ namespace oras.Controllers
 
         // POST: api/Task
         [HttpPost]
+        [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> CreateTask(CreateTaskDto createTaskDto)
         {
             var task = await _taskService.CreateTaskAsync(createTaskDto);
@@ -70,6 +83,7 @@ namespace oras.Controllers
 
         // DELETE: api/Task/1
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> DeleteTask(int id)
         {
             await _taskService.DeleteTaskAsync(id);

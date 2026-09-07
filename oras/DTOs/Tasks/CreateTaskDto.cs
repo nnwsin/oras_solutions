@@ -1,4 +1,4 @@
-﻿using oras.Enums;
+using oras.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace oras.DTOs.Tasks
@@ -26,8 +26,7 @@ namespace oras.DTOs.Tasks
         public int AssigneeId { get; set; }
 
         [Required]
-        [MaxLength(20)]
-        public string Priority { get; set; } = string.Empty;
+        public Priority Priority { get; set; } = Priority.Medium;
 
     }
 }

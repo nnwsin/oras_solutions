@@ -1,4 +1,4 @@
-﻿using oras.Models;
+using oras.Models;
 
 namespace oras.Repositories.Interfaces
 {
@@ -14,6 +14,8 @@ namespace oras.Repositories.Interfaces
         Task UpdateAsync(Project project);
 
         Task DeleteAsync(Project project);
+
+        Task<IEnumerable<Project>> GetByOwnerIdAsync(int ownerId);
 
         Task SaveChangesAsync();
     }

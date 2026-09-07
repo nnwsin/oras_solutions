@@ -1,4 +1,4 @@
-﻿namespace oras.DTOs.Project
+namespace oras.DTOs.Project
 {
     public class ProjectResponseDto
     {
@@ -7,5 +7,9 @@
         public string ProjectName { get; set; } = string.Empty;
 
         public int OwnerId { get; set; }
+
+        public string OwnerName { get; set; } = string.Empty;
+
+        public DateTime CreatedAt { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using oras.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace oras.DTOs.User
 {
@@ -17,5 +18,8 @@ namespace oras.DTOs.User
         [MinLength(6)]
         [MaxLength(100)]
         public string Password { get; set; } = string.Empty;
+
+        [Required]
+        public UserRole Role { get; set; } = UserRole.Employee;
     }
 }

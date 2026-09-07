@@ -1,5 +1,6 @@
 using oras.Auth.Dto;
 using oras.Auth.Interfaces;
+using oras.Enums;
 using oras.Exceptions;
 using oras.Models;
 using oras.Repositories.Interfaces;
@@ -37,7 +38,8 @@ namespace oras.Auth.Services
             {
                 Name = registerDto.Name,
                 Email = registerDto.Email,
-                Password = _passwordService.HashPassword(registerDto.Password)
+                Password = _passwordService.HashPassword(registerDto.Password),
+                Role = UserRole.Employee 
             };
 
             await _userRepository.AddAsync(user);
@@ -65,7 +67,11 @@ namespace oras.Auth.Services
             return new AuthResponseDto
             {
                 Token = token,
-                Expiration = DateTime.UtcNow.AddMinutes(expiryInMinutes)
+                Expiration = DateTime.UtcNow.AddMinutes(expiryInMinutes),
+                UserId = user.UserId,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role
             };
         }
     }

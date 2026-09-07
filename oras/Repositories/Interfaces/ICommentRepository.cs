@@ -1,4 +1,4 @@
-﻿using oras.Models;
+using oras.Models;
 
 namespace oras.Repositories.Interfaces
 {
@@ -13,6 +13,10 @@ namespace oras.Repositories.Interfaces
         Task UpdateAsync(Comment comment);
 
         Task DeleteAsync(Comment comment);
+
+        Task<IEnumerable<Comment>> GetByTaskIdAsync(int taskId);
+
+        Task<IEnumerable<Comment>> GetByUserIdAsync(int userId);
 
         Task SaveChangesAsync();
     }
