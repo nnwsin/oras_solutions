@@ -225,11 +225,11 @@ const Projects = () => {
                             )}
 
                             <div className="modal-actions">
-                                <button type="button" className="btn-secondary" onClick={handleCloseModal}>
-                                    Cancel
-                                </button>
                                 <button type="submit" className="btn-primary" disabled={submitting}>
                                     {submitting ? "Saving..." : (editingProject ? "Update" : "Create")}
+                                </button>
+                                <button type="button" className="btn-secondary" onClick={handleCloseModal}>
+                                    Cancel
                                 </button>
                             </div>
                         </form>
