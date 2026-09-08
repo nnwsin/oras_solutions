@@ -1,60 +1,33 @@
 using Microsoft.EntityFrameworkCore;
 using oras.Data;
+using oras.Enums;
 using oras.Models;
 using oras.Repositories.Interfaces;
-using oras.Enums;
+
 namespace oras.Repositories
 {
-    public class TaskRepository : ITaskRepository
+    public class TaskRepository : GenericRepository<AssignedTask>, ITaskRepository
     {
-
-        private readonly ApplicationDbContext _context;
-
-        public TaskRepository(ApplicationDbContext context)
+        public TaskRepository(ApplicationDbContext context) : base(context)
         {
-            _context = context;
         }
 
-        public async Task<IEnumerable<AssignedTask>> GetAllAsync()
+        public override async Task<IEnumerable<AssignedTask>> GetAllAsync()
         {
-            return await _context.Tasks.Include(t => t.Project).Include(t => t.Assignee).ToListAsync();
+            return await _dbSet.Include(t => t.Project).Include(t => t.Assignee).ToListAsync();
         }
 
-        public async Task<AssignedTask?> GetByIdAsync(int id)
+        public override async Task<AssignedTask?> GetByIdAsync(int id)
         {
-            return await _context.Tasks
+            return await _dbSet
                 .Include(t => t.Project)
                 .Include(t => t.Assignee)
                 .FirstOrDefaultAsync(t => t.TaskId == id);
         }
 
-        public async Task AddAsync(AssignedTask task)
+        public async Task<IEnumerable<AssignedTask>> GetFilteredTasksAsync(int? projectId, AssignedTaskStatus? status, int? assigneeId)
         {
-            await _context.Tasks.AddAsync(task);
-        }
-
-        public Task UpdateAsync(AssignedTask task)
-        {
-            _context.Tasks.Update(task);
-            return Task.CompletedTask;
-        }
-
-        public Task DeleteAsync(AssignedTask task)
-        {
-            _context.Tasks.Update(task);
-            return Task.CompletedTask;
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
-
-
-
-        public async Task<IEnumerable<AssignedTask>> GetFilteredTasksAsync(int? projectId, AssignedTaskStatus? status,int? assigneeId)
-        {
-            var query = _context.Tasks
+            var query = _dbSet
                 .Include(t => t.Project)
                 .Include(t => t.Assignee)
                 .AsQueryable();
@@ -76,6 +49,5 @@ namespace oras.Repositories
 
             return await query.ToListAsync();
         }
-
     }
 }
