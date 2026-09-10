@@ -68,8 +68,20 @@ Question:
 
         response = llm.invoke(prompt)
 
+        answer = response.content
+        if isinstance(answer, list):
+            answer_parts = []
+            for block in answer:
+                if isinstance(block, dict) and "text" in block:
+                    answer_parts.append(block["text"])
+                elif isinstance(block, str):
+                    answer_parts.append(block)
+            answer = "".join(answer_parts)
+        elif not isinstance(answer, str):
+            answer = str(answer)
+
         return {
-            "answer": response.content,
+            "answer": answer,
             "sources": sources
         }
     except Exception as e:
