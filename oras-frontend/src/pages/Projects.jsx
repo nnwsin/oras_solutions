@@ -35,7 +35,13 @@ const Projects = () => {
                 getAllProjects(),
                 getAllUsers().catch(() => [])
             ]);
-            setProjects(projectsData || []);
+            const sortedProjects = [...(projectsData || [])].sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (timeB !== timeA) return timeB - timeA;
+                return (b.projectId || 0) - (a.projectId || 0);
+            });
+            setProjects(sortedProjects);
             setUsers(usersData || []);
         } catch (err) {
             console.error(err);
@@ -79,10 +85,13 @@ const Projects = () => {
                 if (isAdmin && managerUsers.length === 0) {
                     throw new Error("Cannot create project: No user with Manager role found.");
                 }
-                await createProject({
+                const newProj = await createProject({
                     projectName,
                     ownerId: parseInt(ownerId) || (availableOwners.length > 0 ? availableOwners[0].userId : 1)
                 });
+                if (newProj && newProj.projectId) {
+                    setProjects(prev => [newProj, ...prev.filter(p => p.projectId !== newProj.projectId)]);
+                }
             }
             handleCloseModal();
             loadData();
@@ -111,7 +120,7 @@ const Projects = () => {
 
     const getOwnerName = (id) => {
         const owner = users.find(u => u.userId === id);
-        return owner ? owner.name : `User #${id}`;
+        return owner ? owner.name : "Unassigned";
     };
 
     return (
@@ -149,14 +158,19 @@ const Projects = () => {
                     {filteredProjects.map((p) => (
                         <div key={p.projectId} className="project-card">
                             <div className="project-card-header">
-                                <span className="project-icon">📁</span>
+                                <div className="project-icon-box">
+                                    <span className="project-icon">📁</span>
+                                </div>
                                 <h3>{p.projectName}</h3>
                             </div>
                             <div className="project-card-body">
-                                <p className="project-owner">
-                                    <strong>Owner:</strong> {p.ownerName || getOwnerName(p.ownerId)}
-                                </p>
-                                <span className="project-id-tag">ID #{p.projectId}</span>
+                                <div className="project-owner-badge">
+                                    <span className="owner-avatar-icon">👤</span>
+                                    <div className="owner-info">
+                                        <span className="owner-label">Project Lead</span>
+                                        <span className="owner-name">{p.ownerName || getOwnerName(p.ownerId)}</span>
+                                    </div>
+                                </div>
                             </div>
                             {isAdmin && (
                                 <div className="project-card-actions">

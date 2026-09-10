@@ -13,7 +13,10 @@ namespace oras.Repositories
 
         public override async Task<IEnumerable<Project>> GetAllAsync()
         {
-            return await _dbSet.Include(p => p.Owner).ToListAsync();
+            return await _dbSet
+                .Include(p => p.Owner)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
         }
 
         public override async Task<Project?> GetByIdAsync(int id)
@@ -25,7 +28,11 @@ namespace oras.Repositories
 
         public async Task<IEnumerable<Project>> GetByOwnerIdAsync(int ownerId)
         {
-            return await _dbSet.Include(p => p.Owner).Where(p => p.OwnerId == ownerId).ToListAsync();
+            return await _dbSet
+                .Include(p => p.Owner)
+                .Where(p => p.OwnerId == ownerId)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
         }
     }
 }

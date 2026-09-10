@@ -3,6 +3,7 @@ import { getAllTasks, createTask, updateTask, deleteTask } from "../api/taskApi"
 import { getAllProjects } from "../api/projectApi";
 import { getAllUsers } from "../api/userApi";
 import { useAuth } from "../context/AuthContext";
+import StatusDropdown from "../components/StatusDropdown";
 
 const Tasks = () => {
     const { userId: currentUserId, userRole, user: authUser } = useAuth();
@@ -67,10 +68,17 @@ const Tasks = () => {
             ]);
 
             // Ensure client-side filtering as backup for Manager / Employee role
-            let processedTasks = tasksData || [];
+            let processedTasks = [...(tasksData || [])];
             if ((isManager || isEmployee) && currentUserId) {
                 processedTasks = processedTasks.filter(t => t.assigneeId === parseInt(currentUserId));
             }
+
+            processedTasks.sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (timeB !== timeA) return timeB - timeA;
+                return (b.taskId || 0) - (a.taskId || 0);
+            });
 
             setTasks(processedTasks);
             setProjects(projectsData || []);
@@ -99,7 +107,7 @@ const Tasks = () => {
             setTitle(task.title || "");
             setDescription(task.description || "");
             setStatus(task.status || 1);
-            setDueDate(task.dueDate ? task.dueDate.substring(0, 10) : "");
+            setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "");
             setPriority(task.priority || "Medium");
             setProjectId(task.projectId || "");
             setAssigneeId(task.assigneeId || "");
@@ -107,15 +115,17 @@ const Tasks = () => {
             setTitle("");
             setDescription("");
             setStatus(1);
-            setDueDate(new Date().toISOString().substring(0, 10));
+            setDueDate("");
             setPriority("Medium");
             setProjectId(userProjects.length > 0 ? userProjects[0].projectId : "");
+
+            // Default Assignee based on role constraints
             if (isAdmin) {
                 setAssigneeId(mgrs.length > 0 ? mgrs[0].userId : "");
             } else if (isManager) {
                 setAssigneeId(emps.length > 0 ? emps[0].userId : "");
             } else {
-                setAssigneeId(currentUserId || (users.length > 0 ? users[0].userId : ""));
+                setAssigneeId("");
             }
         }
         setIsModalOpen(true);
@@ -124,6 +134,13 @@ const Tasks = () => {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingTask(null);
+        setTitle("");
+        setDescription("");
+        setStatus(1);
+        setDueDate("");
+        setPriority("Medium");
+        setProjectId("");
+        setAssigneeId("");
     };
 
     const handleSubmit = async (e) => {
@@ -160,7 +177,10 @@ const Tasks = () => {
             if (editingTask) {
                 await updateTask(editingTask.taskId, payload);
             } else {
-                await createTask(payload);
+                const newTask = await createTask(payload);
+                if (newTask && newTask.taskId) {
+                    setTasks(prev => [newTask, ...prev.filter(t => t.taskId !== newTask.taskId)]);
+                }
             }
 
             handleCloseModal();
@@ -185,20 +205,31 @@ const Tasks = () => {
     };
 
     const handleQuickStatusChange = async (task, newStatus) => {
+        const updatedStatus = parseInt(newStatus);
+        const previousStatus = task.status;
+
+        // Optimistically update local task state immediately without reload/flash
+        setTasks(prev => prev.map(t =>
+            t.taskId === task.taskId ? { ...t, status: updatedStatus } : t
+        ));
+
         try {
             const payload = {
                 title: task.title,
                 description: task.description,
-                status: parseInt(newStatus),
+                status: updatedStatus,
                 dueDate: task.dueDate,
                 priority: task.priority,
                 projectId: task.projectId,
                 assigneeId: task.assigneeId
             };
             await updateTask(task.taskId, payload);
-            loadData();
         } catch (err) {
             console.error("Failed to update status", err);
+            // Revert state if update failed
+            setTasks(prev => prev.map(t =>
+                t.taskId === task.taskId ? { ...t, status: previousStatus } : t
+            ));
         }
     };
 
@@ -224,19 +255,23 @@ const Tasks = () => {
     const getStatusBadgeClass = (statusVal) => {
         switch (statusVal) {
             case 1:
+            case "1":
             case "Pending":
                 return "badge-pending";
             case 2:
+            case "2":
             case "InProgress":
                 return "badge-progress";
             case 3:
+            case "3":
             case "Completed":
                 return "badge-completed";
             case 4:
+            case "4":
             case "Cancelled":
                 return "badge-cancelled";
             default:
-                return "badge-default";
+                return "";
         }
     };
 
@@ -294,13 +329,13 @@ const Tasks = () => {
                 <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="filter-select"
+                    className={`filter-select ${filterStatus ? `status-select ${getStatusBadgeClass(filterStatus)}` : ""}`}
                 >
                     <option value="">All Statuses</option>
-                    <option value="1">Pending</option>
-                    <option value="2">In Progress</option>
-                    <option value="3">Completed</option>
-                    <option value="4">Cancelled</option>
+                    <option value="1" className="status-opt-pending">Pending</option>
+                    <option value="2" className="status-opt-progress">In Progress</option>
+                    <option value="3" className="status-opt-completed">Completed</option>
+                    <option value="4" className="status-opt-cancelled">Cancelled</option>
                 </select>
 
                 <select
@@ -348,16 +383,10 @@ const Tasks = () => {
                                         </span>
                                     </td>
                                     <td>
-                                        <select
-                                            className={`status-select ${getStatusBadgeClass(t.status)}`}
-                                            value={typeof t.status === "string" ? (t.status === "Pending" ? 1 : t.status === "InProgress" ? 2 : t.status === "Completed" ? 3 : 4) : t.status}
-                                            onChange={(e) => handleQuickStatusChange(t, e.target.value)}
-                                        >
-                                            <option value={1}>Pending</option>
-                                            <option value={2}>In Progress</option>
-                                            <option value={3}>Completed</option>
-                                            <option value={4}>Cancelled</option>
-                                        </select>
+                                        <StatusDropdown
+                                            value={t.status}
+                                            onChange={(newVal) => handleQuickStatusChange(t, newVal)}
+                                        />
                                     </td>
                                     <td>{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "N/A"}</td>
                                     <td className="actions-cell">
@@ -519,16 +548,11 @@ const Tasks = () => {
                             <div className="form-row">
                                 <div className="form-group col-4">
                                     <label>Status</label>
-                                    <select
+                                    <StatusDropdown
                                         value={status}
-                                        onChange={(e) => setStatus(e.target.value)}
-                                        required
-                                    >
-                                        <option value={1}>Pending</option>
-                                        <option value={2}>In Progress</option>
-                                        <option value={3}>Completed</option>
-                                        <option value={4}>Cancelled</option>
-                                    </select>
+                                        onChange={(newVal) => setStatus(newVal)}
+                                        className="modal-status-dropdown-wrapper"
+                                    />
                                 </div>
 
                                 <div className="form-group col-4">

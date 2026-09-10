@@ -13,7 +13,11 @@ namespace oras.Repositories
 
         public override async Task<IEnumerable<Comment>> GetAllAsync()
         {
-            return await _dbSet.Include(c => c.Task).Include(c => c.User).ToListAsync();
+            return await _dbSet
+                .Include(c => c.Task)
+                .Include(c => c.User)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
         }
 
         public override async Task<Comment?> GetByIdAsync(int id)
@@ -26,12 +30,22 @@ namespace oras.Repositories
 
         public async Task<IEnumerable<Comment>> GetByTaskIdAsync(int taskId)
         {
-            return await _dbSet.Include(c => c.Task).Include(c => c.User).Where(c => c.TaskId == taskId).ToListAsync();
+            return await _dbSet
+                .Include(c => c.Task)
+                .Include(c => c.User)
+                .Where(c => c.TaskId == taskId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Comment>> GetByUserIdAsync(int userId)
         {
-            return await _dbSet.Include(c => c.Task).Include(c => c.User).Where(c => c.UserId == userId).ToListAsync();
+            return await _dbSet
+                .Include(c => c.Task)
+                .Include(c => c.User)
+                .Where(c => c.UserId == userId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
         }
     }
 }

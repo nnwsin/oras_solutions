@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../api/authApi";
+import { useTheme } from "../context/ThemeContext";
 
 const Register = () => {
     const [name, setName] = useState("");
@@ -10,6 +11,7 @@ const Register = () => {
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
+    const { isDark, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -35,6 +37,19 @@ const Register = () => {
 
     return (
         <div className="auth-container">
+            <div className="auth-theme-toggle-wrapper">
+                <button
+                    type="button"
+                    className="auth-theme-toggle-btn"
+                    onClick={toggleTheme}
+                    title={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
+                    id="auth-theme-toggle-btn"
+                >
+                    <span className="theme-toggle-icon">{isDark ? "☀️" : "🌙"}</span>
+                    <span className="theme-toggle-label">{isDark ? "Light Mode" : "Dark Mode"}</span>
+                </button>
+            </div>
+
             <div className="auth-card">
                 <div className="auth-header">
                     <h1>Create Account</h1>

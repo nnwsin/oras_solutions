@@ -14,7 +14,11 @@ namespace oras.Repositories
 
         public override async Task<IEnumerable<AssignedTask>> GetAllAsync()
         {
-            return await _dbSet.Include(t => t.Project).Include(t => t.Assignee).ToListAsync();
+            return await _dbSet
+                .Include(t => t.Project)
+                .Include(t => t.Assignee)
+                .OrderByDescending(t => t.CreatedAt)
+                .ToListAsync();
         }
 
         public override async Task<AssignedTask?> GetByIdAsync(int id)
@@ -47,7 +51,7 @@ namespace oras.Repositories
                 query = query.Where(t => t.AssigneeId == assigneeId.Value);
             }
 
-            return await query.ToListAsync();
+            return await query.OrderByDescending(t => t.CreatedAt).ToListAsync();
         }
     }
 }

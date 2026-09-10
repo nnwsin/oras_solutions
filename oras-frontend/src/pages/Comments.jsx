@@ -36,7 +36,13 @@ const Comments = () => {
                 getAllTasks().catch(() => []),
                 getAllUsers().catch(() => [])
             ]);
-            setComments(commentsData || []);
+            const sortedComments = [...(commentsData || [])].sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (timeB !== timeA) return timeB - timeA;
+                return (b.commentId || 0) - (a.commentId || 0);
+            });
+            setComments(sortedComments);
             setTasks(tasksData || []);
             setUsers(usersData || []);
         } catch (err) {
@@ -76,11 +82,14 @@ const Comments = () => {
             if (editingComment) {
                 await updateComment(editingComment.commentId, { content });
             } else {
-                await createComment({
+                const newComment = await createComment({
                     content,
                     taskId: parseInt(taskId),
                     userId: parseInt(currentUserId || userId)
                 });
+                if (newComment && newComment.commentId) {
+                    setComments((prev) => [newComment, ...prev.filter(c => c.commentId !== newComment.commentId)]);
+                }
             }
             handleCloseModal();
             loadData();
@@ -113,6 +122,11 @@ const Comments = () => {
         return u ? u.name : `User #${uId}`;
     };
 
+    const getUserEmail = (uId) => {
+        const u = users.find(usr => usr.userId === uId);
+        return u ? u.email : "";
+    };
+
     return (
         <div className="page-container">
             <div className="page-header-actions">
@@ -143,16 +157,25 @@ const Comments = () => {
             {loading ? (
                 <div className="page-loader">Loading comments...</div>
             ) : comments.length === 0 ? (
-                <div className="empty-state">No comments found.</div>
+                <div className="empty-state">
+                    No comments found. Be the first to start the discussion!
+                </div>
             ) : (
-                <div className="comments-feed">
+                <div className="comments-list">
                     {comments.map((c) => (
                         <div key={c.commentId} className="comment-card">
                             <div className="comment-header">
                                 <div className="comment-user">
                                     <span className="comment-avatar">👤</span>
                                     <div>
-                                        <div className="comment-author-name">{c.userName || getUserName(c.userId)}</div>
+                                        <div className="comment-author-name">
+                                            {c.userName || getUserName(c.userId)}
+                                            {(c.userEmail || getUserEmail(c.userId)) && (
+                                                <span className="comment-author-email-tag">
+                                                    ({c.userEmail || getUserEmail(c.userId)})
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="comment-task-tag">On: <strong>{c.taskTitle || getTaskTitle(c.taskId)}</strong></div>
                                     </div>
                                 </div>
@@ -211,13 +234,19 @@ const Comments = () => {
 
                                     <div className="form-group">
                                         <label>Author</label>
-                                        <input
-                                            type="text"
-                                            value={authUser?.name ? `${authUser.name} (${authUser.email || "You"})` : (currentUserId ? `User #${currentUserId}` : "Current User")}
-                                            disabled
-                                            readOnly
-                                            style={{ backgroundColor: "var(--color-bg-secondary, #f1f5f9)", cursor: "not-allowed" }}
-                                        />
+                                        <div className="comment-author-badge">
+                                            <div className="author-badge-avatar">
+                                                {authUser?.name ? authUser.name.charAt(0).toUpperCase() : (authUser?.email ? authUser.email.charAt(0).toUpperCase() : "👤")}
+                                            </div>
+                                            <div className="author-badge-info">
+                                                <span className="author-badge-name">
+                                                    {authUser?.name || (currentUserId ? `User #${currentUserId}` : "Current User")}
+                                                </span>
+                                                <span className="author-badge-email">
+                                                    {authUser?.email || "You"}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </>
                             )}

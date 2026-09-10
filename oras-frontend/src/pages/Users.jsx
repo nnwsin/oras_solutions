@@ -27,7 +27,13 @@ const Users = () => {
         try {
             setLoading(true);
             const data = await getAllUsers();
-            setUsers(data || []);
+            const sortedUsers = [...(data || [])].sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (timeB !== timeA) return timeB - timeA;
+                return (b.userId || 0) - (a.userId || 0);
+            });
+            setUsers(sortedUsers);
         } catch (err) {
             console.error(err);
             setError("Failed to load user directory.");
@@ -70,12 +76,15 @@ const Users = () => {
                     role: parseInt(role)
                 });
             } else {
-                await createUser({
+                const newUser = await createUser({
                     name,
                     email,
                     password,
                     role: parseInt(role)
                 });
+                if (newUser && newUser.userId) {
+                    setUsers(prev => [newUser, ...prev.filter(u => u.userId !== newUser.userId)]);
+                }
             }
             handleCloseModal();
             loadUsers();
@@ -167,8 +176,7 @@ const Users = () => {
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th>User ID</th>
-                                <th>Name</th>
+                                <th>Member</th>
                                 <th>Email</th>
                                 <th>Role</th>
                                 {isAdmin && <th>Actions</th>}
@@ -177,7 +185,6 @@ const Users = () => {
                         <tbody>
                             {filteredUsers.map((u) => (
                                 <tr key={u.userId}>
-                                    <td className="font-mono">#{u.userId}</td>
                                     <td className="font-semibold">{u.name}</td>
                                     <td>{u.email}</td>
                                     <td>

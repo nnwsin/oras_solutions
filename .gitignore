@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+.venv/
+.env
+__pycache__/
+*.pyc
+.chroma/
+data/
+oras-rag/data/
