@@ -4,26 +4,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.chat import router as chat_router
 from app.api.documents import router as documents_router
-from app.core.config import CORS_ORIGINS
 from app.core.exceptions import register_exception_handlers
 
 app = FastAPI(
     title="ORAAS RAG Service",
     description="AI and RAG service for ORAAS",
     version="1.0.0"
-)
-
-# CORS middleware — allows oras-frontend to call this API
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
 
 # Register custom exception handlers (DuplicateDocumentError, DocumentNotFoundError, etc.)

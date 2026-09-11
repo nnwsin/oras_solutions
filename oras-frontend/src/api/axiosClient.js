@@ -27,6 +27,8 @@ axiosClient.interceptors.response.use(
             if (window.location.pathname !== "/login") {
                 window.location.href = "/login";
             }
+        } else if (error.response && error.response.status === 403) {
+            console.warn("Access forbidden (403): You do not have permission for this resource.");
         }
         return Promise.reject(error);
     }

@@ -97,6 +97,16 @@ const Layout = () => {
                         <span className="nav-icon">👥</span>
                         <span className="nav-text">Users</span>
                     </NavLink>
+                    <NavLink to="/chat" className={({ isActive }) => (isActive ? "active" : "")}>
+                        <span className="nav-icon">🤖</span>
+                        <span className="nav-text">AI Assistant</span>
+                    </NavLink>
+                    {isAdmin && (
+                        <NavLink to="/documents" className={({ isActive }) => (isActive ? "active" : "")}>
+                            <span className="nav-icon">📄</span>
+                            <span className="nav-text">Documents</span>
+                        </NavLink>
+                    )}
                 </nav>
             </aside>
 
