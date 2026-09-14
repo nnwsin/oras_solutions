@@ -24,13 +24,18 @@ if not GEMINI_API_KEY:
         "GEMINI_API_KEY is not set. "
         "Add it to your .env file: GEMINI_API_KEY=your_key_here"
     )
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.6-flash")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "gemini-embedding-001")
 CHROMA_COLLECTION_NAME = "oras_documents"
 
 # Text Splitter Configurations
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
+
+# Tavily Web Search Configurations
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+TAVILY_MAX_RESULTS = int(os.getenv("TAVILY_MAX_RESULTS", "3"))
+TAVILY_SEARCH_DEPTH = os.getenv("TAVILY_SEARCH_DEPTH", "basic")
 
 # CORS Allowed Origins
 CORS_ORIGINS = [

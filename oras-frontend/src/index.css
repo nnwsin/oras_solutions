@@ -2340,6 +2340,33 @@ body {
     color: #38bdf8;
 }
 
+.chat-source-link {
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.chat-source-link:hover {
+    border-color: #0284c7;
+    background: rgba(2, 132, 199, 0.05);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .chat-source-link:hover {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+}
+
+.source-web-badge {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: #10b981 !important;
+}
+
+[data-theme="dark"] .source-web-badge {
+    background: rgba(52, 211, 153, 0.15) !important;
+    color: #34d399 !important;
+}
+
 /* Typing indicator */
 .chat-bubble-loading {
     display: flex;

@@ -222,6 +222,25 @@ const Chat = () => {
                                                 {showSources && (
                                                     <div className="chat-sources-list animate-fade-in">
                                                         {msg.sources.map((src, sIdx) => {
+                                                            const isWeb = src.type === "web" || (!src.document_id && (src.url || src.title));
+                                                            if (isWeb) {
+                                                                const webTitle = src.title || src.url || `Web Result ${sIdx + 1}`;
+                                                                return (
+                                                                    <a
+                                                                        key={sIdx}
+                                                                        href={src.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="chat-source-item chat-source-link"
+                                                                        title={src.url}
+                                                                    >
+                                                                        <span className="source-icon">🌐</span>
+                                                                        <span className="source-name">{webTitle}</span>
+                                                                        <span className="source-page-badge source-web-badge">Web ↗</span>
+                                                                    </a>
+                                                                );
+                                                            }
+
                                                             const srcName = typeof src === "string" ? src : (src.filename || src.source || `Source ${sIdx + 1}`);
                                                             const pageNum = src.page !== undefined ? `Page ${src.page}` : null;
                                                             return (

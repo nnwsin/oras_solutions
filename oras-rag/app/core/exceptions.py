@@ -40,6 +40,13 @@ class DocumentProcessingError(OrasBaseException):
         super().__init__(self.message)
 
 
+class WebSearchError(OrasBaseException):
+    def __init__(self, detail: str):
+        self.detail = detail
+        self.message = f"Web search failed: {detail}"
+        super().__init__(self.message)
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(DocumentNotFoundError)
     async def document_not_found_handler(request: Request, exc: DocumentNotFoundError):
@@ -70,5 +77,12 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def document_processing_handler(request: Request, exc: DocumentProcessingError):
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": exc.message}
+        )
+
+    @app.exception_handler(WebSearchError)
+    async def web_search_error_handler(request: Request, exc: WebSearchError):
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
             content={"detail": exc.message}
         )
