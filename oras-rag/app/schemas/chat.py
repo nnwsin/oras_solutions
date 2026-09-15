@@ -4,7 +4,13 @@ from pydantic import BaseModel, Field
 
 class ChatRequest(BaseModel):
     question: str
+    session_id: str = ""
     mode: str = "hybrid"
+
+
+class ClearSessionResponse(BaseModel):
+    session_id: str
+    cleared: bool
 
 
 class DocumentSource(BaseModel):

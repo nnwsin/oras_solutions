@@ -15,7 +15,6 @@ import Users from "./pages/Users";
 
 import AdminRoute from "./components/AdminRoute";
 import Documents from "./pages/Documents";
-import Chat from "./pages/Chat";
 
 const AppRoutes = () => {
     const { isAuthenticated } = useAuth();
@@ -37,7 +36,6 @@ const AppRoutes = () => {
                     <Route path="/tasks" element={<Tasks />} />
                     <Route path="/comments" element={<Comments />} />
                     <Route path="/users" element={<Users />} />
-                    <Route path="/chat" element={<Chat />} />
 
                     {/* Admin Only Routes */}
                     <Route element={<AdminRoute />}>

@@ -39,9 +39,31 @@ export const deleteDocument = async (documentId) => {
 /**
  * Send a user query to the RAG chat endpoint.
  * @param {string} question - The user's query.
+ * @param {string} [sessionId] - Optional UUID identifying the chat session for Redis short-term memory.
  * @returns {Promise<Object>} Response containing question, answer, and sources.
  */
-export const sendChatMessage = async (question) => {
-    const response = await axiosClient.post("/chat", { question });
+export const sendChatMessage = async (question, sessionId = "") => {
+    const payload = { question };
+    if (sessionId) {
+        payload.session_id = sessionId;
+    }
+    const response = await axiosClient.post("/chat", payload);
     return response.data;
 };
+
+/**
+ * Clear the Redis short-term session memory for a given sessionId.
+ * @param {string} sessionId - UUID of the session to clear.
+ * @returns {Promise<Object>}
+ */
+export const clearChatSession = async (sessionId) => {
+    if (!sessionId) return { cleared: true };
+    try {
+        const response = await axiosClient.delete(`/chat/session/${sessionId}`);
+        return response.data;
+    } catch (err) {
+        console.warn("Failed to clear chat session from Redis:", err);
+        return { cleared: false };
+    }
+};
+

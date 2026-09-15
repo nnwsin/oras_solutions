@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import AIChatWidget from "./AIChatWidget";
 
 const Layout = () => {
     const { user, userEmail, userRole, logout } = useAuth();
@@ -97,10 +98,6 @@ const Layout = () => {
                         <span className="nav-icon">👥</span>
                         <span className="nav-text">Users</span>
                     </NavLink>
-                    <NavLink to="/chat" className={({ isActive }) => (isActive ? "active" : "")}>
-                        <span className="nav-icon">🤖</span>
-                        <span className="nav-text">AI Assistant</span>
-                    </NavLink>
                     {isAdmin && (
                         <NavLink to="/documents" className={({ isActive }) => (isActive ? "active" : "")}>
                             <span className="nav-icon">📄</span>
@@ -185,6 +182,9 @@ const Layout = () => {
                     <Outlet />
                 </section>
             </main>
+
+            {/* Global AI Chat Floating Widget */}
+            <AIChatWidget />
         </div>
     );
 };

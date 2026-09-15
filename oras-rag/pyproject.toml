@@ -7,14 +7,17 @@ requires-python = ">=3.14"
 dependencies = [
     "chromadb>=1.5.9",
     "fastapi>=0.141.1",
+    "google-genai>=2.22.0",
     "langchain>=1.4.0",
     "langchain-chroma>=1.1.0",
     "langchain-community>=0.4.2",
     "langchain-google-genai>=4.4.0",
     "langchain-text-splitters>=1.1.2",
+    "langsmith>=0.12.4",
     "pypdf>=6.18.0",
     "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
+    "redis>=5.0.0",
     "tavily-python>=0.8.2",
     "uvicorn>=0.52.4",
 ]

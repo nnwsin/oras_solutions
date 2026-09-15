@@ -6,6 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.core.config import LLM_MODEL, TAVILY_MAX_RESULTS
 from app.core.exceptions import DocumentProcessingError, WebSearchError
+from app.services.redis_service import redis_service
 from app.services.vector_store import vector_store
 from app.services.web_search_service import WebSearchResult, web_search_service
 
@@ -20,11 +21,57 @@ llm = ChatGoogleGenerativeAI(
 class SearchOrchestrator:
     """
     Orchestrates search and answer synthesis across internal documents (vector store)
-    and external live web search (Tavily), with an intelligent query router.
+    and external live web search (Tavily), with an intelligent query router and
+    Redis-backed short-term conversational memory.
     """
 
     def __init__(self):
         self.llm = llm
+
+    def _contextualize_query(self, question: str, history: list[dict[str, Any]]) -> str:
+        """
+        If conversation history exists, rewrites a potentially dependent follow-up question
+        into a standalone question for retrieval. If question is already standalone or on error,
+        returns the original question.
+        """
+        if not history:
+            return question
+
+        history_lines = []
+        for msg in history[-6:]:
+            role = "User" if msg.get("role") == "user" else "Assistant"
+            history_lines.append(f"{role}: {msg.get('content', '')}")
+        history_text = "\n".join(history_lines)
+
+        prompt = f"""Given the following conversation history and a follow-up question from the user, rephrase the follow-up question into a standalone, search-friendly query that can be understood without the conversation history.
+
+Do NOT answer the question. Only return the rephrased standalone query. If the question is already complete and standalone, return it as is.
+
+Conversation History:
+{history_text}
+
+Follow-up Question: {question}
+Standalone Query:"""
+
+        try:
+            response = self.llm.invoke(prompt)
+            standalone = self._extract_text(response.content).strip()
+            if standalone:
+                logger.info(f"Contextualized query '{question}' -> '{standalone}'")
+                return standalone
+            return question
+        except Exception as e:
+            logger.warning(f"Failed to contextualize query: {e}. Using original question.")
+            return question
+
+    def _format_history_text(self, history: list[dict[str, Any]]) -> str:
+        if not history:
+            return ""
+        lines = []
+        for msg in history[-8:]:
+            role = "User" if msg.get("role") == "user" else "Assistant"
+            lines.append(f"{role}: {msg.get('content', '')}")
+        return "\n### Recent Conversation History:\n" + "\n".join(lines) + "\n\n"
 
     @staticmethod
     def _extract_text(content: Any) -> str:
@@ -109,11 +156,12 @@ Category:"""
             logger.warning(f"Unexpected error during web search: {e}")
             return []
 
-    def _answer_general(self, question: str) -> dict[str, Any]:
-        """Directly answers general knowledge questions using LLM's intrinsic knowledge."""
+    def _answer_general(self, question: str, history: list[dict[str, Any]] = None) -> dict[str, Any]:
+        """Directly answers general knowledge questions using LLM's intrinsic knowledge and conversation context."""
+        history_text = self._format_history_text(history or [])
         prompt = f"""You are the ORAAS AI assistant.
-Answer the following question accurately, concisely, and helpfully using your general knowledge.
-
+Answer the following question accurately, concisely, and helpfully using your general knowledge and conversation context.
+{history_text}
 Question:
 {question}
 """
@@ -131,15 +179,24 @@ Question:
     def ask_question(
         self,
         question: str,
+        session_id: str = "",
         mode: str = "hybrid"
     ) -> dict[str, Any]:
         """
-        Answers a user question using internal documents, web search, or both.
+        Answers a user question using internal documents, web search, or both,
+        maintaining short-term conversational memory in Redis when session_id is provided.
 
         :param question: The user query.
+        :param session_id: Optional UUID identifying the current active chat session.
         :param mode: 'hybrid' (uses router to pick best strategy), 'documents_only', or 'web_only'.
         :return: Dict with 'answer' and 'sources'.
         """
+        # Fetch short-term conversation turns from Redis
+        history = redis_service.get_session_history(session_id) if session_id else []
+
+        # Contextualize query if there is conversation history
+        search_query = self._contextualize_query(question, history) if history else question
+
         documents = []
         web_results = []
 
@@ -147,23 +204,26 @@ Question:
         if mode in ("documents_only", "web_only"):
             effective_mode = mode
         else:
-            effective_mode = self._classify_query(question)
+            effective_mode = self._classify_query(search_query)
 
-        logger.info(f"Effective search mode for question '{question}': {effective_mode}")
+        logger.info(f"Effective search mode for question '{question}' (search query: '{search_query}'): {effective_mode}")
 
         # If general knowledge, answer directly without retrieval
         if effective_mode == "general":
-            return self._answer_general(question)
+            result = self._answer_general(question, history)
+            if session_id:
+                redis_service.append_session_messages(session_id, question, result["answer"])
+            return result
 
-        # Retrieve documents or web or both
+        # Retrieve documents or web or both using search_query
         if effective_mode in ("documents_only", "internal"):
-            documents = self._retrieve_documents(question)
+            documents = self._retrieve_documents(search_query)
         elif effective_mode in ("web_only", "web_needed"):
-            web_results = self._retrieve_web(question)
+            web_results = self._retrieve_web(search_query)
         else:  # hybrid or fallback
             with ThreadPoolExecutor(max_workers=2) as executor:
-                doc_future = executor.submit(self._retrieve_documents, question)
-                web_future = executor.submit(self._retrieve_web, question)
+                doc_future = executor.submit(self._retrieve_documents, search_query)
+                web_future = executor.submit(self._retrieve_web, search_query)
                 documents = doc_future.result()
                 web_results = web_future.result()
 
@@ -211,24 +271,26 @@ Question:
             )
 
         combined_context = "\n\n----------------\n\n".join(context_blocks) if context_blocks else "No relevant context found."
+        history_text = self._format_history_text(history)
 
         prompt = f"""You are the ORAAS AI assistant.
 
-Answer the user's question accurately and helpfully using the context provided below.
+Answer the user's question accurately and helpfully using the context provided below and conversation history.
 You have access to uploaded internal document chunks and/or live web search results.
-
+{history_text}
 Context:
 ----------------
 {combined_context}
 ----------------
 
 Instructions:
-1. Answer using the information provided in the context above.
+1. Answer using the information provided in the context above and conversation history.
 2. If internal documents provide relevant information, prioritize them for internal/company-specific questions.
 3. If web search provides relevant information, use it to answer general or current questions.
-4. Clearly synthesize information if both sources are relevant.
-5. If the context does not contain enough information to answer the question, state clearly that you do not have enough information.
-6. Do not fabricate or invent facts that cannot be supported by the provided context.
+4. Maintain conversational continuity when referring to previous messages.
+5. Clearly synthesize information if both sources are relevant.
+6. If the context does not contain enough information to answer the question, state clearly that you do not have enough information.
+7. Do not fabricate or invent facts that cannot be supported by the provided context.
 
 Question:
 {question}
@@ -237,6 +299,10 @@ Question:
         try:
             response = self.llm.invoke(prompt)
             answer = self._extract_text(response.content)
+
+            # Persist turns into Redis short-term memory
+            if session_id:
+                redis_service.append_session_messages(session_id, question, answer)
 
             return {
                 "answer": answer,
